@@ -1,5 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import axios from 'axios';
+import { tagTypes } from './tagTypes';
 
 // Define types for the base query
 interface BaseQueryArgs {
@@ -12,38 +13,22 @@ interface BaseQueryArgs {
 
 // Create axios instance
 const axiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api',
+  baseURL: '/api', // Use relative path for same-origin API
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Send cookies for authentication
 });
 
-// Add request interceptor for authentication
-axiosInstance.interceptors.request.use(
-  (config) => {
-    // Add auth token if available
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+// No Authorization header logic needed for cookie-based auth
 
 // Add response interceptor for error handling
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     // Handle common errors (401, 403, etc.)
-    if (error.response?.status === 401) {
-      // Handle unauthorized access
-      localStorage.removeItem('authToken');
-      // You can redirect to login page here
-    }
+    // Optionally handle unauthorized access here
     return Promise.reject(error);
   }
 );
@@ -74,7 +59,7 @@ const axiosBaseQuery = () => async ({ url, method, data, params, headers }: Base
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: axiosBaseQuery(),
-  tagTypes: ['User', 'Order', 'Product', 'Inventory'],
+  tagTypes: Object.values(tagTypes),
   endpoints: () => ({}),
 });
 
