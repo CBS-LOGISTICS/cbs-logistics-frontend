@@ -1,0 +1,9 @@
+export { default as Icon } from "./Icon";
+export { default as Truck } from "./Truck";
+export { default as Box } from "./Box";
+export { default as Dollar } from "./Dollar";
+export { default as Graph } from "./Graph";
+export { default as Refresh } from "./Refresh";
+export { default as TruckFast } from "./TruckFast";
+export { default as WalletAdd } from "./WalletAdd";
+export { default as Wallet } from "./Wallet";
