@@ -1,11 +1,11 @@
-import { ConsumerHeader } from "@/components/consumer/layout/consumerHeader";
-import { ConsumerSidebar } from "@/components/consumer/layout/consumerSidebar";
+import { CustomerHeader } from "@/components/customer/layout/consumerHeader";
+import { CustomerSidebar } from "@/components/customer/layout/consumerSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "CBS consumer",
-  description: "consumer section",
+  title: "CBS Logistics - Customer Dashboard",
+  description: "customer section",
 };
 
 export default function ConsumerLayout({
@@ -19,14 +19,14 @@ export default function ConsumerLayout({
         <div className="flex h-screen  overflow-hidden">
           {/* Sidebar */}
           <div className="hidden md:flex">
-            <ConsumerSidebar />
+            <CustomerSidebar />
           </div>
           
           {/* Main Content */}
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Header */}
             <header className="bg-white border-b border-gray-200">
-              <ConsumerHeader />
+              <CustomerHeader />
             </header>
             
             {/* Page Content */}

@@ -1,4 +1,4 @@
-import { ServicesContent } from '@/components/consumer/servicesPage'
+import { ServicesContent } from '@/components/customer/servicesPage'
 import React from 'react'
 
 function ServicesPage() {

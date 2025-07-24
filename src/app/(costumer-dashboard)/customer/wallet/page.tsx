@@ -1,5 +1,5 @@
 import React from 'react'
-import { WalletContent } from '@/components/consumer/WalletPage'
+import { WalletContent } from '@/components/customer/WalletPage'
 
 function Wallet() {
   return (

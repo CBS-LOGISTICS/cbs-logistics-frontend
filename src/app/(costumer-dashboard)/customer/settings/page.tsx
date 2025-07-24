@@ -1,4 +1,4 @@
-import { SettingsContent } from '@/components/consumer/settingsPage'
+import { SettingsContent } from '@/components/customer/settingsPage'
 import React from 'react'
 
 function SettingsPage() {

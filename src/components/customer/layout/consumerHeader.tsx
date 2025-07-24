@@ -6,15 +6,15 @@ import { usePathname } from "next/navigation"
 
 // Map routes to their corresponding titles
 const routeTitles: Record<string, string> = {
-  "/consumer/dashboard": "Dashboard",
-  "/consumer/wallet": "Wallet",
-  "/consumer/order-tracking": "Order Tracking",
-  "/consumer/services": "Services",
-  "/consumer/documents": "Documents",
-  "/consumer/settings": "Settings"
+  "/customer/dashboard": "Dashboard",
+  "/customer/wallet": "Wallet",
+  "/customer/order-tracking": "Order Tracking",
+  "/customer/services": "Services",
+  "/customer/documents": "Documents",
+  "/customer/settings": "Settings"
 }
 
-export function ConsumerHeader() {
+export function CustomerHeader() {
   const pathname = usePathname()
   // Get the title from the mapping, default to "Dashboard" if route not found
   const title = routeTitles[pathname] || "Dashboard"

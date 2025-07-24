@@ -14,7 +14,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-export function ConsumerSidebar() {
+export function CustomerSidebar() {
   const router = useRouter()
   const pathname = usePathname()
 
@@ -22,15 +22,15 @@ export function ConsumerSidebar() {
 const items = [
     {
       title: "Dashboard",
-      url: "/consumer/dashboard",
+      url: "/customer/dashboard",
       icon: Home,
-      isActive: pathname === "/consumer/dashboard",
+      isActive: pathname === "/customer/dashboard",
     },
     {
       title: "Wallet",
-      url: "/consumer/wallet",
+      url: "/customer/wallet",
       icon: Wallet,
-      isActive: pathname === "/consumer/wallet",
+      isActive: pathname === "/customer/wallet",
     },
     {
       title: "Order Tracking",
@@ -40,9 +40,9 @@ const items = [
     },
     {
       title: "Services",
-      url: "/consumer/services",
+      url: "/customer/services",
       icon: Grid3X3,
-      isActive: pathname === "/consumer/services",
+      isActive: pathname === "/customer/services",
     },
     {
       title: "Documents",
@@ -52,9 +52,9 @@ const items = [
     },
     {
       title: "Settings",
-      url: "/consumer/settings",
+      url: "/customer/settings",
       icon: Settings,
-      isActive: pathname === "/consumer/settings",
+      isActive: pathname === "/customer/settings",
     },
   ]
 
