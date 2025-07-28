@@ -9,7 +9,8 @@ import radio from "@/assets/images/radio.png";
 import Image from "next/image";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-
+import Landing from "@/components/Auth/Landing";
+// import router
 interface AuthDataProps {
   email: string;
   password: string;
@@ -17,7 +18,7 @@ interface AuthDataProps {
 
 export default function Home() {
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
-  const [selectedAuth, setSelectedAuth] = useState<string>("signin");
+
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [authData, setAuthData] = useState<AuthDataProps>({
     email: "",
@@ -44,45 +45,23 @@ export default function Home() {
 
   const handleRequestService = (sectionName: string) => {
     console.log(`Requesting service: ${sectionName}`);
+    if (sectionName === "signin") {
+      // Handle sign-in logic here
+      console.log("Signing in with:", authData);
+    } else {
+      // Handle sign-up logic here
+      console.log("Proceeding to next step for:", sectionName);
+    }
   };
 
   const handleInputChange = (field: keyof AuthDataProps, value: string) => {
     setAuthData((prev) => ({ ...prev, [field]: value }));
   };
-  const handlePwdvisibility = (sectionName: string) => {
-    console.log(`Requesting service: ${sectionName}`);
-  };
+ 
   return (
-    <div className="bg-white min-h-screen p-4">
-      <div className="border border-[#DFE1E6] w-full bg-[#F9F9FB] p-3 rounded-[10px]">
-        <div className="border border-[#DFE1E6] bg-white p-3 rounded-[10px] shadow-md transition-shadow mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Welcome back</h3>
-          <p className="text-sm text-gray-700">
-            Glad to see you again. Log in to your account.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3 mb-4">
-          <Button
-            variant={selectedAuth === "signin" ? "ghost" : "outline"}
-            className={`px-12 ${
-              selectedAuth === "signin" ? "text-black" : "text-[#666D80]"
-            }`}
-            onClick={() => setSelectedAuth("signin")}
-          >
-            Sign In
-          </Button>
-          <Button
-            variant={selectedAuth === "signup" ? "ghost" : "outline"}
-            className={`px-12 
-              ${selectedAuth === "signup" ? "text-black" : "text-[#666D80]"}`}
-            onClick={() => setSelectedAuth("signup")}
-          >
-            Sign Up
-          </Button>
-        </div>
-
-        <div className="border border-[#DFE1E6] bg-white p-3 rounded-[10px]">
+    <Landing>
+      {(selectedAuth) => (
+        <>
           {selectedAuth === "signin" ? (
             <div className="space-y-6 md:w-[600px] md:mx-auto">
               <div>
@@ -175,33 +154,35 @@ export default function Home() {
               ))}
             </div>
           )}
-        </div>
-        <div className="mt-6 md:flex md:justify-center">
-          <Button
-            variant="destructive"
-            className="w-full cursor-pointer md:w-[40%]"
-            disabled={!selectedSection && !selectedAuth}
-            onClick={() => handleRequestService("Next")}
-          >
-            {selectedAuth === "signin" ? "Sign In" : "Next"}
-          </Button>
-          {selectedAuth === "signin" && (
-            <>
-            <div className="flex items-center justify-center my-2 space-x-2">
-              <hr className="w-[50%]"/><span>Or</span><hr className="w-[50%]"/>
-            </div>
+
+          <div className="mt-6 md:flex md:justify-center">
             <Button
-              variant="outline"
+              variant="destructive"
               className="w-full cursor-pointer md:w-[40%]"
-              onClick={() => handleRequestService("Next")}
+              disabled={!selectedSection}
+              onClick={() => handleRequestService(selectedAuth)}
             >
-              Sign In with Google
+              {selectedAuth === "signin" ? "Sign In" : "Next"}
             </Button>
-           
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+            {selectedAuth === "signin" && (
+              <>
+                <div className="flex items-center justify-center my-2 space-x-2">
+                  <hr className="w-[50%]" />
+                  <span>Or</span>
+                  <hr className="w-[50%]" />
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full cursor-pointer md:w-[40%]"
+                  onClick={() => handleRequestService("Next")}
+                >
+                  Sign In with Google
+                </Button>
+              </>
+            )}
+          </div>
+        </>
+      )}
+    </Landing>
   );
 }
