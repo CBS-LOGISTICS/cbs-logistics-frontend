@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
-import { User, UserRole, UserStatus } from '@/models/User';
-import { CustomerProfile } from '@/models/CustomerProfile';
 import { AgentProfile, IAgentProfileModel } from '@/models/AgentProfile';
+import { CustomerProfile } from '@/models/CustomerProfile';
+import { User, UserRole, UserStatus } from '@/models/User';
+import { NextRequest, NextResponse } from 'next/server';
+import { createElement } from 'react';
 
 export async function POST(req: NextRequest) {
   try {
@@ -150,6 +151,40 @@ export async function POST(req: NextRequest) {
     });
     await customerProfile.save();
 
+    // Send welcome email (don't fail registration if email fails)
+    try {
+      const { resend, EMAIL_FROM, EMAIL_SUBJECTS } = await import('@/lib/resend');
+      const { WelcomeEmail } = await import('@/emails/WelcomeEmail');
+      const { render } = await import('@react-email/render');
+
+      let referredByAgentName = null;
+      if (referredBy) {
+        const referringAgentUser = await User.findById(referredBy);
+        if (referringAgentUser) {
+          referredByAgentName = `${referringAgentUser.firstName} ${referringAgentUser.lastName}`;
+        }
+      }
+
+      const emailHtml = await render(
+        createElement(WelcomeEmail, {
+          fullName,
+          email,
+          referralCode: referralCode || undefined,
+          referredByAgent: referredByAgentName || undefined,
+        })
+      );
+
+      await resend.emails.send({
+        from: EMAIL_FROM,
+        to: email,
+        subject: EMAIL_SUBJECTS.CUSTOMER_WELCOME,
+        html: emailHtml,
+      });
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Continue with registration even if email fails
+    }
+
     return NextResponse.json({
       message: 'Customer registration submitted successfully',
       user: {
@@ -165,6 +200,7 @@ export async function POST(req: NextRequest) {
         'Your registration has been submitted for admin review',
         'You will receive an email notification once approved',
       ],
+
       referralInfo: referralCode ? {
         referredBy,
         referralCode,

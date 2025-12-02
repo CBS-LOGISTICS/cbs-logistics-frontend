@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
-import { User, UserRole, UserStatus } from '@/models/User';
 import { AgentProfile } from '@/models/AgentProfile';
+import { User, UserRole, UserStatus } from '@/models/User';
+import { NextRequest, NextResponse } from 'next/server';
+import { createElement } from 'react';
 
 export async function POST(req: NextRequest) {
   try {
@@ -146,6 +147,31 @@ export async function POST(req: NextRequest) {
     });
 
     await agentProfile.save();
+
+    // Send welcome email (don't fail registration if email fails)
+    try {
+      const { resend, EMAIL_FROM, EMAIL_SUBJECTS } = await import('@/lib/resend');
+      const { AgentWelcomeEmail } = await import('@/emails/AgentWelcomeEmail');
+      const { render } = await import('@react-email/render');
+
+      const emailHtml = await render(
+        createElement(AgentWelcomeEmail, {
+          firstName,
+          lastName,
+          email,
+        })
+      );
+
+      await resend.emails.send({
+        from: EMAIL_FROM,
+        to: email,
+        subject: EMAIL_SUBJECTS.AGENT_WELCOME,
+        html: emailHtml,
+      });
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Continue with registration even if email fails
+    }
 
     return NextResponse.json({
       message: 'Agent registration submitted successfully',

@@ -1,4 +1,4 @@
-import { CustomerSidebar } from "@/components/customer-sidebar"
+import { AgentSidebar } from "@/components/agent-sidebar"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -10,14 +10,14 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 
-export default function CustomerLayout({
+export default function AgentLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
     <SidebarProvider>
-      <CustomerSidebar />
+      <AgentSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
@@ -25,7 +25,7 @@ export default function CustomerLayout({
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="/customer/dashboard">Customer</BreadcrumbLink>
+                <BreadcrumbLink href="/agent/dashboard">Agent</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>

@@ -1,5 +1,5 @@
-import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
+import mongoose, { Document, Schema } from 'mongoose';
 
 export enum UserRole {
   SUPER_ADMIN = 'super_admin',
@@ -50,6 +50,13 @@ export interface IUser extends Document {
   };
   dateOfBirth?: Date;
   gender?: 'male' | 'female' | 'other';
+  commissionRate?: number; // Added for Agents
+  bankDetails?: {
+    accountName: string;
+    accountNumber: string;
+    bankName: string;
+    swiftCode: string;
+  };
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -188,11 +195,23 @@ const userSchema = new Schema<IUser>(
       type: String,
       enum: ['male', 'female', 'other'],
     },
+    commissionRate: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+    bankDetails: {
+      accountName: { type: String, trim: true },
+      accountNumber: { type: String, trim: true },
+      bankName: { type: String, trim: true },
+      swiftCode: { type: String, trim: true },
+    },
   },
   {
     timestamps: true,
     toJSON: {
-      transform: function (doc, ret) {
+      transform: function (doc, ret: any) {
         delete ret.password;
         delete ret.emailVerificationToken;
         delete ret.emailVerificationExpires;

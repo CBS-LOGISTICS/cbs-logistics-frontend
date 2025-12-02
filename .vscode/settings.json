@@ -1,4 +1,9 @@
 {
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit",
+        "source.organizeImports": "explicit",
+        "source.sortMembers": "explicit"
+    },
     "workbench.colorCustomizations": {
         "activityBar.activeBackground": "#3333ff",
         "activityBar.background": "#3333ff",
@@ -17,5 +22,6 @@
         "titleBar.activeForeground": "#e7e7e7",
         "titleBar.inactiveBackground": "#0000ff99",
         "titleBar.inactiveForeground": "#e7e7e799"
-    }
+    },
+    "peacock.color": "#15202b"
 }
