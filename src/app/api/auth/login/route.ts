@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { generateToken } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import { User, UserStatus } from '@/models/User';
-import { generateToken } from '@/lib/auth';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,10 +27,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    console.log(user, "USER FOR SERVER");
+
     // Check if user is approved
     if (user.status !== UserStatus.APPROVED) {
       return NextResponse.json(
-        { 
+        {
           error: 'Account not approved',
           status: user.status,
           requiresApproval: user.status === UserStatus.PENDING,
@@ -43,7 +45,7 @@ export async function POST(req: NextRequest) {
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
       return NextResponse.json(
-        { error: 'Invalid credentials' },
+        { error: 'Invalid password' },
         { status: 401 }
       );
     }
@@ -70,12 +72,15 @@ export async function POST(req: NextRequest) {
         lastName: user.lastName,
         role: user.role,
         status: user.status,
-        referralCode: user.referralCode,
+        referralCode: (user as any).referralCode,
         lastLoginAt: user.lastLoginAt,
+        ...user.role === "admin" && ({
+          mustChangePassword: user.mustChangePassword,
+        })
       },
     });
     response.cookies.set('authToken', token, {
-      httpOnly: true,
+      httpOnly: false, // Allow client-side access for Redux store hydration
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/',

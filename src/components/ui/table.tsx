@@ -1,8 +1,9 @@
+import { cn } from "@/lib/utils"
+import { Loader2 } from "lucide-react"
 import * as React from "react"
 
-import { cn } from "@/lib/utils"
-
-const Table = React.forwardRef<
+// Primitives
+const TableRoot = React.forwardRef<
     HTMLTableElement,
     React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }, ref) => (
@@ -14,7 +15,7 @@ const Table = React.forwardRef<
         />
     </div>
 ))
-Table.displayName = "Table"
+TableRoot.displayName = "TableRoot"
 
 const TableHeader = React.forwardRef<
     HTMLTableSectionElement,
@@ -105,8 +106,94 @@ const TableCaption = React.forwardRef<
 ))
 TableCaption.displayName = "TableCaption"
 
+// High-level Table Component
+export interface Column<T> {
+    title: React.ReactNode;
+    dataIndex?: keyof T;
+    key: string;
+    render?: (value: any, record: T, index: number) => React.ReactNode;
+    className?: string;
+    width?: string | number;
+}
+
+export interface TableProps<T> {
+    columns: Column<T>[];
+    dataSource: T[];
+    loading?: boolean;
+    rowKey?: string | ((record: T) => string);
+    onRow?: (record: T, index: number) => React.HTMLAttributes<HTMLTableRowElement>;
+    className?: string;
+    emptyText?: React.ReactNode;
+}
+
+function Table<T>({
+    columns,
+    dataSource,
+    loading,
+    rowKey = "_id", // Default to _id for MongoDB
+    onRow,
+    className,
+    emptyText = "No data found",
+}: TableProps<T>) {
+    return (
+        <div className={cn("rounded-md border", className)}>
+            <TableRoot>
+                <TableHeader>
+                    <TableRow>
+                        {columns.map((col) => (
+                            <TableHead key={col.key} className={col.className} style={{ width: col.width }}>
+                                {col.title}
+                            </TableHead>
+                        ))}
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {loading ? (
+                        <TableRow>
+                            <TableCell colSpan={columns.length} className="h-24 text-center">
+                                <div className="flex justify-center items-center">
+                                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                    ) : dataSource.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                                {emptyText}
+                            </TableCell>
+                        </TableRow>
+                    ) : (
+                        dataSource.map((record, index) => {
+                            const key = typeof rowKey === 'function' ? rowKey(record) : (record as any)[rowKey] || index;
+                            const rowProps = onRow ? onRow(record, index) : {};
+
+                            return (
+                                <TableRow key={key} {...rowProps}>
+                                    {columns.map((col) => {
+                                        const value = col.dataIndex ? (record as any)[col.dataIndex] : undefined;
+                                        return (
+                                            <TableCell key={col.key} className={col.className}>
+                                                {col.render ? col.render(value, record, index) : value}
+                                            </TableCell>
+                                        );
+                                    })}
+                                </TableRow>
+                            );
+                        })
+                    )}
+                </TableBody>
+            </TableRoot>
+        </div>
+    );
+}
+
 export {
-    Table, TableBody, TableCaption, TableCell, TableFooter,
-    TableHead, TableHeader, TableRow
+    Table, // Exported for custom usage if needed
+    TableBody,
+    TableCaption,
+    TableCell,
+    TableFooter,
+    TableHead,
+    TableHeader, TableRoot, TableRow
 }
 

@@ -1,9 +1,13 @@
 import { AgentApprovalEmail } from '@/emails/AgentApprovalEmail';
+import { AuthenticatedRequest, authenticateUser, requireAdmin } from '@/lib/auth';
+import { sendEmail } from '@/lib/email';
 import dbConnect from '@/lib/mongodb';
-import { EMAIL_FROM, EMAIL_SUBJECTS, resend } from '@/lib/resend';
-import { User, UserRole, UserStatus } from '@/models/User';
+import { EMAIL_FROM, EMAIL_SUBJECTS } from '@/lib/resend';
+import { User } from '@/models/User';
+import { UserRole, UserStatus } from '@/models/user-types';
+import { Agent } from '@/models/users/Agent';
 import { render } from '@react-email/render';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createElement } from 'react';
 
 // Helper to generate a random referral code
@@ -14,14 +18,25 @@ function generateReferralCode(firstName: string, lastName: string): string {
 }
 
 export async function POST(
-    req: NextRequest,
+    req: AuthenticatedRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const user = await authenticateUser(req);
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        req.user = user;
+
+        const roleCheck = await requireAdmin(req);
+        if (roleCheck) {
+            return roleCheck;
+        }
+
         await dbConnect();
         const { id } = await params;
 
-        const agent = await User.findById(id);
+        const agent = await Agent.findById(id);
 
         if (!agent) {
             return NextResponse.json(
@@ -73,7 +88,7 @@ export async function POST(
                 })
             );
 
-            await resend.emails.send({
+            await sendEmail({
                 from: EMAIL_FROM,
                 to: agent.email,
                 subject: EMAIL_SUBJECTS.AGENT_APPROVED,

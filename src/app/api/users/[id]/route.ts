@@ -24,7 +24,7 @@ export async function PATCH(
     // Check permissions: Admin can update anyone, User can only update themselves
     const isAdmin = user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN;
     const { id } = await params;
-    
+
     if (!isAdmin && user.userId !== id) {
       return NextResponse.json(
         { error: 'Forbidden: You can only update your own profile' },
@@ -33,9 +33,9 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { 
-      status, 
-      commissionRate, 
+    const {
+      status,
+      commissionRate,
       role,
       firstName,
       lastName,

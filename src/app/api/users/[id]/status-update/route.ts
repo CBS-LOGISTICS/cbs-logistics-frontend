@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { AuthenticatedRequest, authenticateUser, requireAdmin } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
-import { User, UserStatus, UserRole } from '@/models/User';
 import { AgentProfile, IAgentProfileModel } from '@/models/AgentProfile';
-import { authenticateUser, requireAdmin, AuthenticatedRequest } from '@/lib/auth';
+import { User, UserRole, UserStatus } from '@/models/User';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(
+export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -13,6 +13,7 @@ export async function POST(
 
     // Authenticate user
     const adminUser = await authenticateUser(req);
+    console.log('Authenticated user:', adminUser);
     if (!adminUser) {
       return NextResponse.json(
         { error: 'Authentication required' },

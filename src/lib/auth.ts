@@ -13,6 +13,7 @@ export interface JWTPayload {
   email: string;
   role: UserRole;
   status: string;
+  mustChangePassword?: boolean;
 }
 
 export interface AuthenticatedRequest extends NextRequest {
@@ -42,6 +43,13 @@ export function extractToken(req: NextRequest): string | null {
   if (authHeader && authHeader.startsWith('Bearer ')) {
     return authHeader.substring(7);
   }
+
+  // Also check for the token in cookies
+  const cookieToken = req.cookies.get('authToken')?.value;
+  if (cookieToken) {
+    return cookieToken;
+  }
+
   return null;
 }
 
@@ -50,22 +58,26 @@ export async function authenticateUser(req: NextRequest): Promise<JWTPayload | n
   try {
     const token = extractToken(req);
     if (!token) {
+      console.log('No token found in request');
       return null;
     }
 
     const payload = verifyToken(token);
     if (!payload) {
+      console.log('Invalid token');
       return null;
     }
 
     // Verify user still exists and is active
-    const user = await User.findById(payload.userId).select('status role');
+    const user = await User.findById(payload.userId).select('status role mustChangePassword');
     if (!user || user.status !== 'approved') {
+      console.log('User not found or not approved');
       return null;
     }
 
     return payload;
   } catch {
+    console.log('Authentication failed');
     return null;
   }
 }

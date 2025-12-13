@@ -1,0 +1,168 @@
+{
+	"info": {
+		"_postman_id": "cbs-logistics-admin-seed",
+		"name": "CBS Logistics Admin Seeding",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Seed Admin (Secret Key)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-admin-secret-key",
+						"value": "{{adminSecret}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"admin@example.com\",\n    \"firstName\": \"Admin\",\n    \"lastName\": \"User\",\n    \"phone\": \"1234567890\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/admin/seed",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"admin",
+						"seed"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login Admin",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"if (jsonData.token) {",
+							"    pm.environment.set(\"authToken\", jsonData.token);",
+							"    console.log(\"Token set:\", jsonData.token);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"REPLACE_WITH_TEMP_PASSWORD\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Change Password",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{authToken}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"currentPassword\": \"REPLACE_WITH_TEMP_PASSWORD\",\n    \"newPassword\": \"NewStrongPassword123!\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/auth/admin/change-password",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"auth",
+						"admin",
+						"change-password"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Seed Admin (As Admin)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{authToken}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"admin2@example.com\",\n    \"firstName\": \"Second\",\n    \"lastName\": \"Admin\",\n    \"phone\": \"0987654321\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/admin/seed",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"admin",
+						"seed"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "adminSecret",
+			"value": "YOUR_SECRET_KEY_HERE",
+			"type": "string"
+		}
+	]
+}

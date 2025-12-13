@@ -26,16 +26,34 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
+import { LogoutModal } from '@/components/logout-modal'
+import { useLogoutUserMutation } from '@/store/slices/usersApi'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+
 export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const router = useRouter();
+  const [logoutUser, { isLoading }] = useLogoutUserMutation();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser().unwrap();
+      router.push('/');
+    } catch (error) {
+      console.error('Logout failed', error);
+    }
+  };
+
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <a href="/admin/dashboard">
+    <>
+      <Sidebar collapsible="icon" {...props}>
+        <SidebarHeader>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton size="lg" asChild>
                 <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-                  <Link href="/" className="flex items-center gap-2 font-semibold">
+                  <Link href="/admin/dashboard" className="flex items-center gap-2 font-semibold">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -55,73 +73,81 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
                     <span className="">CBS Logistics</span>
                   </Link>
                 </div>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Management</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <a href="/admin/dashboard">
-                    <LayoutDashboard />
-                    <span>Dashboard</span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <a href="/admin/agents">
-                    <UserCog />
-                    <span>Agents</span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <a href="/admin/suppliers">
-                    <Truck />
-                    <span>Suppliers</span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <a href="/admin/customers">
-                    <Users />
-                    <span>Customers</span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <a href="/admin/settings">
-                    <Settings />
-                    <span>Settings</span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <Button variant="ghost" className="w-full justify-start">
-                <LogOut />
-                <span>Logout</span>
-              </Button>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-      <SidebarRail />
-    </Sidebar>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Management</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/admin/dashboard">
+                      <LayoutDashboard />
+                      <span>Dashboard</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/admin/agents">
+                      <UserCog />
+                      <span>Agents</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/admin/suppliers">
+                      <Truck />
+                      <span>Suppliers</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/admin/customers">
+                      <Users />
+                      <span>Customers</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/admin/settings">
+                      <Settings />
+                      <span>Settings</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Button variant="ghost" className="w-full" onClick={() => setIsLogoutModalOpen(true)}>
+                  <div className="w-full justify-start flex items-center gap-2">
+                    <LogOut />
+                    <span>Logout</span>
+                  </div>
+                </Button>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+        <SidebarRail />
+      </Sidebar>
+      <LogoutModal
+        open={isLogoutModalOpen}
+        onOpenChange={setIsLogoutModalOpen}
+        onConfirm={handleLogout}
+        isLoading={isLoading}
+      />
+    </>
   )
 }

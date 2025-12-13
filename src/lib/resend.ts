@@ -1,10 +1,8 @@
-import { Resend } from 'resend';
 
-if (!process.env.RESEND_API_KEY) {
-  throw new Error('RESEND_API_KEY is not defined in environment variables');
-}
+// export const resend = new Resend(process.env.RESEND_API_KEY);
+// We are moving to src/lib/email.ts for sending emails.
+// Keeping constants here for now.
 
-export const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Define email sender
 export const EMAIL_FROM = 'CBS Logistics <onboarding@cbslogistics.com>';

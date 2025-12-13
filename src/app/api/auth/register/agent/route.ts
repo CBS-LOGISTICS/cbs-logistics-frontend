@@ -1,6 +1,7 @@
 import dbConnect from '@/lib/mongodb';
 import { AgentProfile } from '@/models/AgentProfile';
 import { User, UserRole, UserStatus } from '@/models/User';
+import { Agent } from '@/models/users/Agent';
 import { NextRequest, NextResponse } from 'next/server';
 import { createElement } from 'react';
 
@@ -18,10 +19,10 @@ export async function POST(req: NextRequest) {
       phone,
       dateOfBirth,
       gender,
-      
+
       // Address Information
       address,
-      
+
       // Agent-Specific Information
       nationalId,
       passportNumber,
@@ -31,18 +32,18 @@ export async function POST(req: NextRequest) {
       bankAccountNumber,
       bankAccountName,
       emergencyContact,
-      
+
       // Professional Information
       references,
-      
+
       // Business Information
       businessAddress,
-      
+
       // Commission Structure
       commissionRate,
       paymentMethod,
       paymentDetails,
-      
+
       // Documents
       profileImage,
       idDocument,
@@ -60,9 +61,9 @@ export async function POST(req: NextRequest) {
     const missingFields = requiredFields.filter(field => !body[field]);
     if (missingFields.length > 0) {
       return NextResponse.json(
-        { 
+        {
           error: 'Missing required fields',
-          missingFields 
+          missingFields
         },
         { status: 400 }
       );
@@ -99,7 +100,7 @@ export async function POST(req: NextRequest) {
     const birthDate = new Date(dateOfBirth);
     const age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    
+
     if (age < 18 || (age === 18 && monthDiff < 0)) {
       return NextResponse.json(
         { error: 'Agent must be at least 18 years old' },
@@ -108,7 +109,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create agent user
-    const agent = new User({
+    const agent = new Agent({
       email,
       password,
       firstName,
@@ -150,7 +151,8 @@ export async function POST(req: NextRequest) {
 
     // Send welcome email (don't fail registration if email fails)
     try {
-      const { resend, EMAIL_FROM, EMAIL_SUBJECTS } = await import('@/lib/resend');
+      const { EMAIL_FROM, EMAIL_SUBJECTS } = await import('@/lib/resend');
+      const { sendEmail } = await import('@/lib/email');
       const { AgentWelcomeEmail } = await import('@/emails/AgentWelcomeEmail');
       const { render } = await import('@react-email/render');
 
@@ -162,7 +164,7 @@ export async function POST(req: NextRequest) {
         })
       );
 
-      await resend.emails.send({
+      await sendEmail({
         from: EMAIL_FROM,
         to: email,
         subject: EMAIL_SUBJECTS.AGENT_WELCOME,
@@ -193,10 +195,14 @@ export async function POST(req: NextRequest) {
       ],
     }, { status: 201 });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Agent registration error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: 'Internal server error',
+        details: error.message, // Temporary for debugging
+        stack: error.stack // Temporary for debugging
+      },
       { status: 500 }
     );
   }

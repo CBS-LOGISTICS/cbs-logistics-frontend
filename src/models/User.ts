@@ -1,67 +1,9 @@
 import bcrypt from 'bcryptjs';
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
+import { IUser, UserRole, UserStatus } from './user-types';
 
-export enum UserRole {
-  SUPER_ADMIN = 'super_admin',
-  ADMIN = 'admin',
-  SUPPLIER = 'supplier',
-  AGENT = 'agent',
-  CUSTOMER = 'customer',
-}
-
-export enum UserStatus {
-  PENDING = 'pending',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  DEACTIVATED = 'deactivated',
-}
-
-export interface IUser extends Document {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  role: UserRole;
-  status: UserStatus;
-  referralCode?: string;
-  referredBy?: mongoose.Types.ObjectId;
-  approvedBy?: mongoose.Types.ObjectId;
-  approvedAt?: Date;
-  rejectedBy?: mongoose.Types.ObjectId;
-  rejectedAt?: Date;
-  rejectionReason?: string;
-  deactivatedBy?: mongoose.Types.ObjectId;
-  deactivatedAt?: Date;
-  deactivationReason?: string;
-  lastLoginAt?: Date;
-  isEmailVerified: boolean;
-  emailVerificationToken?: string;
-  emailVerificationExpires?: Date;
-  passwordResetToken?: string;
-  passwordResetExpires?: Date;
-  profileImage?: string;
-  address?: {
-    street: string;
-    city: string;
-    state: string;
-    country: string;
-    zipCode: string;
-  };
-  dateOfBirth?: Date;
-  gender?: 'male' | 'female' | 'other';
-  commissionRate?: number; // Added for Agents
-  bankDetails?: {
-    accountName: string;
-    accountNumber: string;
-    bankName: string;
-    swiftCode: string;
-  };
-  createdAt: Date;
-  updatedAt: Date;
-  comparePassword(candidatePassword: string): Promise<boolean>;
-  generateReferralCode(): string;
-}
+export { UserRole, UserStatus };
+export type { IUser };
 
 const userSchema = new Schema<IUser>(
   {
@@ -105,11 +47,6 @@ const userSchema = new Schema<IUser>(
       type: String,
       enum: Object.values(UserStatus),
       default: UserStatus.PENDING,
-    },
-    referralCode: {
-      type: String,
-      unique: true,
-      sparse: true,
     },
     referredBy: {
       type: Schema.Types.ObjectId,
@@ -163,6 +100,10 @@ const userSchema = new Schema<IUser>(
     passwordResetExpires: {
       type: Date,
     },
+    mustChangePassword: {
+      type: Boolean,
+      default: false,
+    },
     profileImage: {
       type: String,
     },
@@ -195,21 +136,10 @@ const userSchema = new Schema<IUser>(
       type: String,
       enum: ['male', 'female', 'other'],
     },
-    commissionRate: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 100,
-    },
-    bankDetails: {
-      accountName: { type: String, trim: true },
-      accountNumber: { type: String, trim: true },
-      bankName: { type: String, trim: true },
-      swiftCode: { type: String, trim: true },
-    },
   },
   {
     timestamps: true,
+    discriminatorKey: 'role', // Use 'role' as the discriminator key
     toJSON: {
       transform: function (doc, ret: any) {
         delete ret.password;
@@ -224,8 +154,7 @@ const userSchema = new Schema<IUser>(
 );
 
 // Indexes for better query performance
-userSchema.index({ email: 1 });
-userSchema.index({ referralCode: 1 });
+// userSchema.index({ email: 1 }); // Removed duplicate (defined in schema)
 userSchema.index({ role: 1, status: 1 });
 userSchema.index({ referredBy: 1 });
 userSchema.index({ approvedBy: 1 });
@@ -243,21 +172,9 @@ userSchema.pre('save', async function (next) {
   }
 });
 
-
-
 // Instance method to compare password
 userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
-};
-
-
-
-// Static method to get agent's customers
-userSchema.statics.getAgentCustomers = function (agentId: mongoose.Types.ObjectId) {
-  return this.find({ 
-    referredBy: agentId, 
-    role: UserRole.CUSTOMER 
-  }).select('-password -emailVerificationToken -passwordResetToken');
 };
 
 // Virtual for full name

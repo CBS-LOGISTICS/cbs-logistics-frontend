@@ -2,16 +2,16 @@ import mongoose, { Document, Schema } from "mongoose";
 
 export interface IAgentProfile extends Document {
   userId: mongoose.Types.ObjectId;
-  
+
   // Agent Identification
-  referralCode: string; // Unique 6-letter + 2-number combination
-  
+  referralCode?: string; // Unique 6-letter + 2-number combination
+
   // Personal Information
   nationalId: string;
   passportNumber?: string;
   taxIdentificationNumber?: string;
   businessLicense?: string;
-  
+
   // Financial Information
   bankName: string;
   bankAccountNumber: string;
@@ -37,8 +37,8 @@ export interface IAgentProfile extends Document {
 
   // Commission Structure
   commissionRate: number;
-  paymentMethod: string;
-  paymentDetails: string;
+  paymentMethod?: string;
+  paymentDetails?: string;
 
   // Documents
   profileImage?: string;
@@ -69,15 +69,15 @@ const agentProfileSchema = new Schema<IAgentProfile>(
       required: true,
       unique: true,
     },
-    
+
     // Agent Identification
     referralCode: {
       type: String,
-      required: [true, "Referral code is required"],
       unique: true,
+      sparse: true, // Allow null/undefined
       match: [/^[A-Z]{6}[0-9]{2}$/, "Referral code must be 6 letters followed by 2 numbers"],
     },
-    
+
     // Personal Information
     nationalId: {
       type: String,
@@ -160,11 +160,11 @@ const agentProfileSchema = new Schema<IAgentProfile>(
     },
     paymentMethod: {
       type: String,
-      required: [true, "Payment method is required"],
+      // required: [true, "Payment method is required"], // Made optional
     },
     paymentDetails: {
       type: String,
-      required: [true, "Payment details are required"],
+      // required: [true, "Payment details are required"], // Made optional
     },
 
     // Documents
@@ -198,9 +198,6 @@ const agentProfileSchema = new Schema<IAgentProfile>(
 );
 
 // Indexes for better query performance
-agentProfileSchema.index({ userId: 1 });
-agentProfileSchema.index({ referralCode: 1 });
-agentProfileSchema.index({ nationalId: 1 });
 agentProfileSchema.index({ isActive: 1 });
 
 // Update lastUpdated timestamp on save
@@ -213,38 +210,38 @@ agentProfileSchema.pre("save", function (next) {
 agentProfileSchema.statics.generateReferralCode = async function (): Promise<string> {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const numbers = '0123456789';
-  
+
   let referralCode: string;
   let isUnique = false;
-  
+
   while (!isUnique) {
     // Generate 6 random letters
-    const letterPart = Array.from({ length: 6 }, () => 
+    const letterPart = Array.from({ length: 6 }, () =>
       letters.charAt(Math.floor(Math.random() * letters.length))
     ).join('');
-    
+
     // Generate 2 random numbers
-    const numberPart = Array.from({ length: 2 }, () => 
+    const numberPart = Array.from({ length: 2 }, () =>
       numbers.charAt(Math.floor(Math.random() * numbers.length))
     ).join('');
-    
+
     referralCode = letterPart + numberPart;
-    
+
     // Check if this referral code already exists
     const existingAgent = await this.findOne({ referralCode });
     if (!existingAgent) {
       isUnique = true;
     }
   }
-  
+
   return referralCode!;
 };
 
 // Static method to find agent by referral code
 agentProfileSchema.statics.findByReferralCode = function (referralCode: string) {
-  return this.findOne({ 
-    referralCode, 
-    isActive: true 
+  return this.findOne({
+    referralCode,
+    isActive: true
   }).populate('userId', 'firstName lastName email status role');
 };
 

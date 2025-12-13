@@ -2,6 +2,7 @@ import dbConnect from '@/lib/mongodb';
 import { AgentProfile, IAgentProfileModel } from '@/models/AgentProfile';
 import { CustomerProfile } from '@/models/CustomerProfile';
 import { User, UserRole, UserStatus } from '@/models/User';
+import { Customer } from '@/models/users/Customer';
 import { NextRequest, NextResponse } from 'next/server';
 import { createElement } from 'react';
 
@@ -116,7 +117,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create customer user
-    const customer = new User({
+    const customer = new Customer({
       email,
       password,
       firstName: fullName.split(' ')[0],
@@ -153,7 +154,8 @@ export async function POST(req: NextRequest) {
 
     // Send welcome email (don't fail registration if email fails)
     try {
-      const { resend, EMAIL_FROM, EMAIL_SUBJECTS } = await import('@/lib/resend');
+      const { EMAIL_FROM, EMAIL_SUBJECTS } = await import('@/lib/resend');
+      const { sendEmail } = await import('@/lib/email');
       const { WelcomeEmail } = await import('@/emails/WelcomeEmail');
       const { render } = await import('@react-email/render');
 
@@ -174,7 +176,7 @@ export async function POST(req: NextRequest) {
         })
       );
 
-      await resend.emails.send({
+      await sendEmail({
         from: EMAIL_FROM,
         to: email,
         subject: EMAIL_SUBJECTS.CUSTOMER_WELCOME,

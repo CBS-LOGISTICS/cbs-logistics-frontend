@@ -1,13 +1,22 @@
-import { api } from '../api';
+import { baseApi } from '../api';
 
 // Define types for user data
 export interface User {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   role: string;
-  createdAt: string;
-  updatedAt: string;
+  status: string;
+  mustChangePassword?: boolean;
+  referralCode?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface LoginResponse {
+  message: string;
+  user: User;
 }
 
 export interface CreateUserRequest {
@@ -132,8 +141,13 @@ export interface AgentByReferralResponse {
   };
 }
 
+export interface LoginUserRequest {
+  email: string;
+  password: string;
+}
+
 // Create the users API slice
-export const usersApi = api.injectEndpoints({
+export const usersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getUsers: builder.query<User[], void>({
       query: () => ({
@@ -142,7 +156,7 @@ export const usersApi = api.injectEndpoints({
       }),
       providesTags: ['User'],
     }),
-    
+
     getUserById: builder.query<User, string>({
       query: (id) => ({
         url: `/users/${id}`,
@@ -150,7 +164,7 @@ export const usersApi = api.injectEndpoints({
       }),
       providesTags: (result, error, id) => [{ type: 'User', id }],
     }),
-    
+
     createUser: builder.mutation<User, CreateUserRequest>({
       query: (userData) => ({
         url: '/users',
@@ -159,7 +173,7 @@ export const usersApi = api.injectEndpoints({
       }),
       invalidatesTags: ['User'],
     }),
-    
+
     updateUser: builder.mutation<User, UpdateUserRequest>({
       query: ({ id, ...userData }) => ({
         url: `/users/${id}`,
@@ -168,10 +182,10 @@ export const usersApi = api.injectEndpoints({
       }),
       invalidatesTags: (result, error, { id }) => [
         { type: 'User', id },
-        'User',
+        'User', 'Agents', 'Customers'
       ],
     }),
-    
+
     deleteUser: builder.mutation<void, string>({
       query: (id) => ({
         url: `/users/${id}`,
@@ -203,6 +217,21 @@ export const usersApi = api.injectEndpoints({
       }),
       providesTags: ['user'],
     }),
+    loginUser: builder.mutation<LoginResponse, LoginUserRequest>({
+      query: (data) => ({
+        url: '/auth/login',
+        method: 'POST',
+        data,
+      }),
+      invalidatesTags: ['user'],
+    }),
+    logoutUser: builder.mutation<void, void>({
+      query: () => ({
+        url: '/auth/logout',
+        method: 'POST',
+      }),
+      invalidatesTags: ['user'],
+    }),
   }),
 });
 
@@ -216,4 +245,6 @@ export const {
   useRegisterCustomerMutation,
   useRegisterAgentMutation,
   useGetAgentByReferralCodeQuery,
+  useLoginUserMutation,
+  useLogoutUserMutation,
 } = usersApi; 

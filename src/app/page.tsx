@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SignInFormData, signInSchema } from "@/lib/validations/authSchemas";
+import { useLoginUserMutation } from "@/store/slices/usersApi";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, KeyRound, Mail } from "lucide-react";
 import Image from "next/image";
@@ -20,7 +21,7 @@ export default function Home() {
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [showComingSoonModal, setShowComingSoonModal] = useState(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
-
+  const [loginUserMutation, { isLoading }] = useLoginUserMutation();
   // React Hook Form setup
   const {
     register,
@@ -35,6 +36,8 @@ export default function Home() {
   });
 
   const IconComponent = showPassword ? EyeOff : Eye;
+
+  console.log(isLoading, "IS LOADING");
 
   const onboardingSections = [
     {
@@ -56,7 +59,40 @@ export default function Home() {
 
   const handleSignIn = (data: SignInFormData) => {
     console.log("Signing in with:", data);
-    // TODO: Implement actual sign-in logic with API
+    loginUserMutation(data).unwrap().then(async (res) => {
+      console.log("Login successful:", res);
+
+      // Check if user must change password
+      if (res.user.mustChangePassword) {
+        // Logout to clear the session
+        await fetch('/api/auth/logout', { method: 'POST' });
+
+        // Redirect to change password page with email
+        router.push(`/auth/change-password?email=${encodeURIComponent(res.user.email)}`);
+        return;
+      }
+
+      // Route based on role
+      switch (res.user.role) {
+        case 'agent':
+          router.push('/agent/dashboard');
+          break;
+        case 'admin':
+        case 'super_admin':
+          router.push('/admin/dashboard');
+          break;
+        case 'customer':
+          router.push('/customer/dashboard');
+          break;
+        case 'supplier':
+          router.push('/supplier/dashboard');
+          break;
+        default:
+          router.push('/');
+      }
+    }).catch((err) => {
+      console.error("Login failed:", err);
+    });
   };
 
   const handleRequestService = (sectionName: string) => {
@@ -172,6 +208,8 @@ export default function Home() {
               <Button
                 type="submit"
                 className="w-full h-12 bg-gradient-to-r from-[#F63915] to-[#d42e0f] hover:from-[#d42e0f] hover:to-[#F63915] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-base"
+                disabled={isLoading}
+                loading={isLoading}
               >
                 Sign In
               </Button>
@@ -209,8 +247,8 @@ export default function Home() {
                   key={index}
                   onClick={() => setSelectedSection(section.title)}
                   className={`relative group cursor-pointer transition-all duration-300 overflow-hidden border-2 ${selectedSection === section.title
-                      ? "border-[#F63915] bg-gradient-to-br from-red-50 to-white shadow-xl scale-105"
-                      : "border-gray-200 hover:border-[#F63915]/50 hover:shadow-lg hover:scale-102 bg-white"
+                    ? "border-[#F63915] bg-gradient-to-br from-red-50 to-white shadow-xl scale-105"
+                    : "border-gray-200 hover:border-[#F63915]/50 hover:shadow-lg hover:scale-102 bg-white"
                     }`}
                 >
                   {/* Gradient Overlay */}
@@ -221,8 +259,8 @@ export default function Home() {
                   <CardContent className="p-6 relative z-10">
                     <div className="flex items-start justify-between mb-4">
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${selectedSection === section.title
-                          ? "bg-gradient-to-br from-[#F63915] to-[#d42e0f] shadow-lg"
-                          : "bg-gray-100 group-hover:bg-red-50"
+                        ? "bg-gradient-to-br from-[#F63915] to-[#d42e0f] shadow-lg"
+                        : "bg-gray-100 group-hover:bg-red-50"
                         }`}>
                         <Image
                           src={selectedSection === section.title ? radio : boxImg}
@@ -254,18 +292,25 @@ export default function Home() {
 
           {/* Button Section */}
           <div className="mt-6 sm:mt-8 space-y-4 px-4 sm:px-0">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 w-full sm:w-auto sm:mx-auto">
-              <Button
-                variant="destructive"
-                className="w-full sm:w-auto sm:min-w-[200px] sm:px-8 h-12 sm:h-11 text-base font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg"
-                disabled={selectedAuth === "signup" && !selectedSection}
-                onClick={() => handleRequestService(selectedAuth)}
-              >
-                {selectedAuth === "signin" ? "Sign In" : "Next"}
-              </Button>
-            </div>
+            {selectedAuth !== "signin" && (
 
-            {selectedAuth === "signin" && (
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 w-full sm:w-auto sm:mx-auto">
+                <Button
+                  variant="destructive"
+                  className="w-full sm:w-auto sm:min-w-[200px] sm:px-8 h-12 sm:h-11 text-base font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg"
+                  disabled={selectedAuth === "signup" && !selectedSection}
+                  onClick={() => handleRequestService(selectedAuth)}
+                  loading={isLoading}
+                >
+                  {"Next"}
+                </Button>
+              </div>
+            )
+            }
+
+
+
+            {/* {selectedAuth === "signin" && (
               <>
                 <div className="flex items-center justify-center my-4 sm:my-6 gap-3 sm:gap-4">
                   <div className="flex-1 h-px bg-gray-200"></div>
@@ -284,7 +329,7 @@ export default function Home() {
                   </Button>
                 </div>
               </>
-            )}
+            )} */}
           </div>
 
           {/* Coming Soon Modal */}

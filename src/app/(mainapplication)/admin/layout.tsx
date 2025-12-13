@@ -10,6 +10,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 
+
 export default function AdminLayout({
   children,
 }: {
@@ -17,6 +18,7 @@ export default function AdminLayout({
 }) {
   return (
     <SidebarProvider>
+      {/* <AdminAuthCheck /> */}
       <AdminSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
