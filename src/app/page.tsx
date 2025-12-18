@@ -15,6 +15,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 export default function Home() {
   const router = useRouter();
@@ -90,8 +91,10 @@ export default function Home() {
         default:
           router.push('/');
       }
+      toast.success('Login successful!');
     }).catch((err) => {
       console.error("Login failed:", err);
+      toast.error(err?.data?.error || 'Login failed. Please check your credentials.');
     });
   };
 

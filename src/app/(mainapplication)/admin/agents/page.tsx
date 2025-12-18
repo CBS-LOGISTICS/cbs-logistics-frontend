@@ -3,19 +3,34 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Column, Table } from '@/components/ui/table';
 import { IUser } from '@/models/User';
 import { UserStatus } from '@/models/user-types';
-import { useGetAgentsQuery, useUpdateUserStatusMutation } from '@/store/slices/adminApi';
-import { Check, Edit2, Search, X } from 'lucide-react';
+import { useDeleteUserMutation, useGetAgentsQuery, useUpdateUserStatusMutation } from '@/store/slices/adminApi';
+import { Check, Edit2, Search, Trash, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function AgentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const { data: agents, isLoading } = useGetAgentsQuery();
+  const [deleteAgent, setDeleteAgent] = useState<string | null>(null);
   const [updateUser, { isLoading: isUpdatingUser }] = useUpdateUserStatusMutation();
+  const [deleteUser, { isLoading: isDeletingUser }] = useDeleteUserMutation();
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to permanently delete this agent? This action cannot be undone.')) {
+      try {
+        await deleteUser(id).unwrap();
+        toast.success('Agent deleted successfully');
+      } catch (error) {
+        console.error('Failed to delete agent', error);
+        toast.error('Failed to delete agent');
+      }
+    }
+  };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
@@ -119,39 +134,80 @@ export default function AgentsPage() {
               </Button>
             </>
           )}
+          {
+            record.status === UserStatus.APPROVED && (
+              <Button loading={isUpdatingUser} size="sm" variant="outline" className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                onClick={() => handleStatusChange(record._id as string, UserStatus.DEACTIVATED)}>
+                <X className="h-4 w-4 mr-1" /> Deactivate
+              </Button>
+            )
+          }
+          {
+            (record.status === UserStatus.REJECTED || record.status === UserStatus.DEACTIVATED) && (
+              <Button loading={isUpdatingUser} size="sm" variant="outline" className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                onClick={() => handleStatusChange(record._id as string, UserStatus.APPROVED)}>
+                <Check className="h-4 w-4 mr-1" /> Approve
+              </Button>
+            )
+          }
+          <Button loading={isDeletingUser} size="sm" variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            onClick={() => setDeleteAgent(record._id as string)}>
+            <Trash className="h-4 w-4 mr-1" /> Delete
+          </Button>
         </div>
       ),
     },
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Agent Management</h1>
-      </div>
+    <>
+      <Dialog open={deleteAgent !== null} onOpenChange={(open) => !open && setDeleteAgent(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Agent</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to permanently delete this agent? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteAgent(null)} disabled={isDeletingUser}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={() => handleDelete(deleteAgent ?? "")} loading={isDeletingUser}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold tracking-tight">Agent Management</h1>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Agents Directory</CardTitle>
-          <div className="flex items-center space-x-2">
-            <Search className="w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search agents..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
+        <Card>
+          <CardHeader>
+            <CardTitle>Agents Directory</CardTitle>
+            <div className="flex items-center justify-end space-x-2">
+              <Search className="w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search agents..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-sm"
+              />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Table
+              columns={columns}
+              dataSource={filteredAgents}
+              loading={isLoading}
+              emptyText="No agents found"
             />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Table
-            columns={columns}
-            dataSource={filteredAgents}
-            loading={isLoading}
-            emptyText="No agents found"
-          />
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+
+      </div>
+    </>
   );
 }

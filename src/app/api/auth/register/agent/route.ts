@@ -108,6 +108,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Check if agent profile unique fields already exist
+    const duplicateCheck = await AgentProfile.findOne({
+      $or: [
+        { nationalId },
+        ...(passportNumber ? [{ passportNumber }] : []),
+        ...(taxIdentificationNumber ? [{ taxIdentificationNumber }] : []),
+        ...(businessLicense ? [{ businessLicense }] : [])
+      ]
+    });
+
+    if (duplicateCheck) {
+      let duplicateField = 'Profile information';
+      if (duplicateCheck.nationalId === nationalId) duplicateField = 'National ID';
+      else if (duplicateCheck.passportNumber === passportNumber) duplicateField = 'Passport Number';
+      else if (duplicateCheck.taxIdentificationNumber === taxIdentificationNumber) duplicateField = 'Tax ID';
+      else if (duplicateCheck.businessLicense === businessLicense) duplicateField = 'Business License';
+
+      return NextResponse.json(
+        { error: `${duplicateField} already exists in our system` },
+        { status: 409 }
+      );
+    }
+
     // Create agent user
     const agent = new Agent({
       email,
@@ -124,30 +147,37 @@ export async function POST(req: NextRequest) {
 
     await agent.save();
 
-    // Create agent profile (without referral code initially)
-    const agentProfile = new AgentProfile({
-      userId: agent._id,
-      nationalId,
-      passportNumber,
-      taxIdentificationNumber,
-      businessLicense,
-      bankName,
-      bankAccountNumber,
-      bankAccountName,
-      emergencyContact,
-      references: references || [],
-      businessAddress,
-      commissionRate: parseFloat(commissionRate) || 0.05, // Default 5%
-      paymentMethod,
-      paymentDetails,
-      profileImage,
-      documents: {
-        idDocument,
-        businessLicenseDocument,
-      },
-    });
+    try {
+      // Create agent profile (without referral code initially)
+      const agentProfile = new AgentProfile({
+        userId: agent._id,
+        nationalId,
+        passportNumber,
+        taxIdentificationNumber,
+        businessLicense,
+        bankName,
+        bankAccountNumber,
+        bankAccountName,
+        emergencyContact,
+        references: references || [],
+        businessAddress,
+        commissionRate: parseFloat(commissionRate) || 0.05, // Default 5%
+        paymentMethod,
+        paymentDetails,
+        profileImage,
+        documents: {
+          idDocument,
+          businessLicenseDocument,
+        },
+      });
 
-    await agentProfile.save();
+      await agentProfile.save();
+    } catch (profileError) {
+      console.error('Failed to create agent profile, rolling back user creation:', profileError);
+      // Rollback: Delete the created user to prevent orphaned records
+      await Agent.findByIdAndDelete(agent._id);
+      throw profileError; // Re-throw to be caught by the outer catch block
+    }
 
     // Send welcome email (don't fail registration if email fails)
     try {

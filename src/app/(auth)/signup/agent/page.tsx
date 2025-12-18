@@ -12,6 +12,7 @@ import { Check, Loader2, Package } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 export default function AgentSignupPage() {
     const router = useRouter();
@@ -59,8 +60,10 @@ export default function AgentSignupPage() {
         try {
             const result = await registerAgent(data as any).unwrap();
             console.log('Registration successful:', result);
+            toast.success('Agent registration submitted successfully!');
         } catch (err: any) {
             console.error('Registration error:', err);
+            toast.error(err?.data?.error || 'Registration failed. Please try again.');
         }
     };
 

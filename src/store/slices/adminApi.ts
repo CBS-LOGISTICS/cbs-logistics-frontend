@@ -33,18 +33,18 @@ export const adminApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: [tagTypes.CUSTOMERS],
         }),
-        deleteCustomer: builder.mutation<void, string>({
+        deleteUser: builder.mutation<void, string>({
             query: (id) => ({
-                url: `admin/customers/${id}`,
+                url: `admin/users/${id}`,
                 method: 'DELETE',
             }),
-            invalidatesTags: [tagTypes.CUSTOMERS],
+            invalidatesTags: [tagTypes.AGENTS, tagTypes.CUSTOMERS],
         }),
         updateUserStatus: builder.mutation<void, { id: string; data: any }>({
             query: ({ id, data }) => ({
                 url: `users/${id}/status-update`,
                 method: 'PATCH',
-                body: data,
+                data: data,
             }),
             invalidatesTags: [tagTypes.AGENTS, tagTypes.CUSTOMERS],
         }),
@@ -56,6 +56,6 @@ export const {
     useGetAgentsQuery,
     useApproveCustomerMutation,
     useSuspendCustomerMutation,
-    useDeleteCustomerMutation,
+    useDeleteUserMutation,
     useUpdateUserStatusMutation,
 } = adminApi;

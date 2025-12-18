@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
     const {
       // Personal Information
       title,
-      fullName,
+      firstName,
+      lastName,
       dateOfBirth,
       phone,
       email,
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
 
     // Validate required fields
     const requiredFields = [
-      'title', 'fullName', 'dateOfBirth', 'phone', 'email', 'maritalStatus', 'occupation', 'nationality', 'stateOfOrigin', 'localGovernmentArea', 'residentialAddress', 'nextOfKin', 'requiredDocuments', 'password'
+      'title', 'firstName', 'lastName', 'dateOfBirth', 'phone', 'email', 'maritalStatus', 'occupation', 'nationality', 'stateOfOrigin', 'localGovernmentArea', 'residentialAddress', 'nextOfKin', 'requiredDocuments', 'password'
     ];
     const missingFields = requiredFields.filter(field => !body[field]);
     if (missingFields.length > 0) {
@@ -120,8 +121,8 @@ export async function POST(req: NextRequest) {
     const customer = new Customer({
       email,
       password,
-      firstName: fullName.split(' ')[0],
-      lastName: fullName.split(' ').slice(1).join(' ') || fullName.split(' ')[0],
+      firstName,
+      lastName,
       phone,
       dateOfBirth,
       role: UserRole.CUSTOMER,
@@ -134,7 +135,7 @@ export async function POST(req: NextRequest) {
     const customerProfile = new CustomerProfile({
       userId: customer._id,
       title,
-      fullName,
+      fullName: `${firstName} ${lastName}`,
       dateOfBirth,
       phone,
       email,
@@ -169,7 +170,7 @@ export async function POST(req: NextRequest) {
 
       const emailHtml = await render(
         createElement(WelcomeEmail, {
-          fullName,
+          fullName: `${firstName} ${lastName}`,
           email,
           referralCode: referralCode || undefined,
           referredByAgent: referredByAgentName || undefined,
@@ -192,7 +193,8 @@ export async function POST(req: NextRequest) {
       user: {
         id: customer._id,
         email: customer.email,
-        fullName,
+        firstName,
+        lastName,
         role: customer.role,
         status: customer.status,
         referredBy: customer.referredBy,

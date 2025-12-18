@@ -2,30 +2,63 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ImageUpload } from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CustomerRegistrationFormData, customerRegistrationSchema } from '@/lib/validations/authSchemas';
 import { useRegisterCustomerMutation } from '@/store/slices/usersApi';
+import { cloudinaryUpload } from '@/utils/uploadToCloudinary';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, Loader2, Package } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 export default function CustomerSignupPage() {
     const router = useRouter();
-    const [registerCustomer, { isLoading, isSuccess }] = useRegisterCustomerMutation();
+    const [registerCustomer, { isLoading: isRegisterLoading, isSuccess }] = useRegisterCustomerMutation();
+    const [isUploading, setIsUploading] = useState(false);
+
+    // File states
+    const [files, setFiles] = useState<{
+        idImage: File | null;
+        passportPhoto: File | null;
+        proofOfPayment: File | null;
+    }>({
+        idImage: null,
+        passportPhoto: null,
+        proofOfPayment: null,
+    });
+
+    // Preview states for UI
+    const [previews, setPreviews] = useState<{
+        idImage: { url: string | null; type: string | null };
+        passportPhoto: { url: string | null; type: string | null };
+        proofOfPayment: { url: string | null; type: string | null };
+    }>({
+        idImage: { url: null, type: null },
+        passportPhoto: { url: null, type: null },
+        proofOfPayment: { url: null, type: null },
+    });
+
+    const isLoading = isRegisterLoading || isUploading;
 
     // React Hook Form setup
     const {
         register,
         handleSubmit,
+        setValue,
+        clearErrors,
+        trigger,
         formState: { errors },
     } = useForm<CustomerRegistrationFormData>({
         resolver: zodResolver(customerRegistrationSchema),
         defaultValues: {
             title: '',
-            fullName: '',
+            firstName: '',
+            lastName: '',
             dateOfBirth: '',
             phone: '',
             email: '',
@@ -54,16 +87,78 @@ export default function CustomerSignupPage() {
         },
     });
 
+    // Helper to handle file selection
+    const handleFileChange = (field: keyof typeof files, file: File | null) => {
+        if (!file) return;
+
+        const objectUrl = URL.createObjectURL(file);
+
+        setFiles(prev => ({ ...prev, [field]: file }));
+        setPreviews(prev => ({
+            ...prev,
+            [field]: {
+                url: objectUrl,
+                type: file.type, // 🔥 THIS IS THE KEY
+            },
+        }));
+
+        setValue(`requiredDocuments.${field}`, objectUrl);
+        clearErrors(`requiredDocuments.${field}`);
+    };
+
+    const handleRemoveFile = (field: keyof typeof files) => {
+        setFiles(prev => ({ ...prev, [field]: null }));
+        setPreviews(prev => ({ ...prev, [field]: null }));
+        setValue(`requiredDocuments.${field}`, '');
+    };
+
+    // Get preview URLs for the render
+    const { idImage: idImagePreview, passportPhoto: passportPhotoPreview, proofOfPayment: proofOfPaymentPreview } = previews;
+
     const onSubmit = async (data: CustomerRegistrationFormData) => {
+        // Validate that we have physical files if the URLs are blob URLs (or check local state)
+        if (!files.idImage || !files.passportPhoto || !files.proofOfPayment) {
+            toast.error("Please upload all required documents.");
+            return;
+        }
+
         try {
-            const result = await registerCustomer(data).unwrap();
+            setIsUploading(true);
+
+            // Upload files concurrently
+            const uploadPromises = [
+                cloudinaryUpload(files.idImage),
+                cloudinaryUpload(files.passportPhoto),
+                cloudinaryUpload(files.proofOfPayment)
+            ];
+
+            const [idImageRes, passportPhotoRes, proofOfPaymentRes] = await Promise.all(uploadPromises);
+
+            // Update data with real Cloudinary URLs
+            const finalData = {
+                ...data,
+                requiredDocuments: {
+                    idImage: idImageRes.secure_url,
+                    passportPhoto: passportPhotoRes.secure_url,
+                    proofOfPayment: proofOfPaymentRes.secure_url,
+                }
+            };
+
+            // Now submit registration
+            await registerCustomer(finalData).unwrap();
+
+            setIsUploading(false);
             // Success is handled by isSuccess state
-            console.log('Registration successful:', result);
+            toast.success('Registration successful!');
         } catch (err: any) {
-            console.error('Registration error:', err);
-            // Error handling can be added here if needed
+            setIsUploading(false);
+            console.error('Registration/Upload error:', err);
+            toast.error(err?.data?.error || err.message || 'Registration failed. Please try again.');
         }
     };
+
+    console.log(errors, "FORM ERRORS");
+
 
     if (isSuccess) {
         return (
@@ -134,6 +229,18 @@ export default function CustomerSignupPage() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="firstName">First Name *</Label>
+                                    <Input id="firstName" {...register('firstName')} />
+                                    {errors.firstName && <p className="text-sm text-red-600">{errors.firstName.message}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="lastName">Last Name *</Label>
+                                    <Input id="lastName" {...register('lastName')} />
+                                    {errors.lastName && <p className="text-sm text-red-600">{errors.lastName.message}</p>}
+                                </div>
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="title">Title *</Label>
@@ -150,18 +257,6 @@ export default function CustomerSignupPage() {
                                     </select>
                                     {errors.title && <p className="text-sm text-red-600">{errors.title.message}</p>}
                                 </div>
-                                <div className="space-y-2 md:col-span-2">
-                                    <Label htmlFor="fullName">Full Name *</Label>
-                                    <Input id="fullName" {...register('fullName')} />
-                                    {errors.fullName && <p className="text-sm text-red-600">{errors.fullName.message}</p>}
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="dateOfBirth">Date of Birth *</Label>
-                                    <Input id="dateOfBirth" type="date" {...register('dateOfBirth')} />
-                                    {errors.dateOfBirth && <p className="text-sm text-red-600">{errors.dateOfBirth.message}</p>}
-                                </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="maritalStatus">Marital Status *</Label>
                                     <select
@@ -174,6 +269,11 @@ export default function CustomerSignupPage() {
                                         <option value="other">Other</option>
                                     </select>
                                     {errors.maritalStatus && <p className="text-sm text-red-600">{errors.maritalStatus.message}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+                                    <Input id="dateOfBirth" type="date" {...register('dateOfBirth')} />
+                                    {errors.dateOfBirth && <p className="text-sm text-red-600">{errors.dateOfBirth.message}</p>}
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -288,18 +388,38 @@ export default function CustomerSignupPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="idImage">ID Image URL *</Label>
-                                <Input id="idImage" {...register('requiredDocuments.idImage')} placeholder="Enter image URL" />
+                                <Label>ID Image *</Label>
+                                <ImageUpload
+                                    previewUrl={previews.idImage.url}
+                                    fileType={previews.idImage.type}
+                                    value={null}
+                                    onChange={(file) => handleFileChange('idImage', file)}
+                                    onRemove={() => handleRemoveFile('idImage')}
+                                />
                                 {errors.requiredDocuments?.idImage && <p className="text-sm text-red-600">{errors.requiredDocuments.idImage.message}</p>}
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="passportPhoto">Passport Photo URL *</Label>
-                                <Input id="passportPhoto" {...register('requiredDocuments.passportPhoto')} placeholder="Enter image URL" />
+                                <Label>Passport Photo *</Label>
+                                <ImageUpload
+                                    label="Upload Passport Photo"
+                                    value={null}
+                                    previewUrl={previews.passportPhoto.url}
+                                    fileType={previews.passportPhoto.type}
+                                    onChange={(file) => handleFileChange('passportPhoto', file)}
+                                    onRemove={() => handleRemoveFile('passportPhoto')}
+                                />
                                 {errors.requiredDocuments?.passportPhoto && <p className="text-sm text-red-600">{errors.requiredDocuments.passportPhoto.message}</p>}
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="proofOfPayment">Proof of Payment URL *</Label>
-                                <Input id="proofOfPayment" {...register('requiredDocuments.proofOfPayment')} placeholder="Enter image URL" />
+                                <Label>Proof of Payment *</Label>
+                                <ImageUpload
+                                    label="Upload Proof of Payment"
+                                    previewUrl={previews.proofOfPayment.url}
+                                    value={null}
+                                    fileType={previews.proofOfPayment.type}
+                                    onChange={(file) => handleFileChange('proofOfPayment', file)}
+                                    onRemove={() => handleRemoveFile('proofOfPayment')}
+                                />
                                 {errors.requiredDocuments?.proofOfPayment && <p className="text-sm text-red-600">{errors.requiredDocuments.proofOfPayment.message}</p>}
                             </div>
                         </CardContent>
@@ -346,6 +466,6 @@ export default function CustomerSignupPage() {
                     </div>
                 </form>
             </div>
-        </div>
+        </div >
     );
 }

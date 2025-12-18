@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,15 +13,18 @@ import { Column, Table } from '@/components/ui/table';
 import { formatDate } from '@/lib/date';
 import { UserStatus } from '@/models/user-types';
 import { ICustomer } from '@/models/users/Customer';
-import { useApproveCustomerMutation, useDeleteCustomerMutation, useGetCustomersQuery, useSuspendCustomerMutation } from '@/store/slices/adminApi';
+import { useApproveCustomerMutation, useDeleteUserMutation, useGetCustomersQuery, useSuspendCustomerMutation, useUpdateUserStatusMutation } from '@/store/slices/adminApi';
 import { MoreHorizontal } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function AdminCustomersPage() {
   const { data: customers, isLoading } = useGetCustomersQuery();
   const [approveCustomer] = useApproveCustomerMutation();
   const [suspendCustomer] = useSuspendCustomerMutation();
-  const [deleteCustomer] = useDeleteCustomerMutation();
+  const [deleteUser, { isLoading: isDeletingUser }] = useDeleteUserMutation();
+  const [updateUserStatus] = useUpdateUserStatusMutation();
+  const [deleteCustomer, setDeleteCustomer] = useState<string | null>(null);
 
   const handleApprove = async (id: string) => {
     try {
@@ -40,14 +44,22 @@ export default function AdminCustomersPage() {
     }
   };
 
+  const handleDeactivate = async (id: string) => {
+    try {
+      await updateUserStatus({ id, data: { status: UserStatus.DEACTIVATED } }).unwrap();
+      toast.success('Customer deactivated successfully');
+    } catch (error) {
+      toast.error('Failed to deactivate customer');
+    }
+  };
+
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this customer?')) {
-      try {
-        await deleteCustomer(id).unwrap();
-        toast.success('Customer deleted successfully');
-      } catch (error) {
-        toast.error('Failed to delete customer');
-      }
+    try {
+      await deleteUser(id).unwrap();
+      toast.success('Customer deleted successfully');
+      setDeleteCustomer(null);
+    } catch (error) {
+      toast.error('Failed to delete customer');
     }
   };
 
@@ -92,10 +104,10 @@ export default function AdminCustomersPage() {
       render: (status) => (
         <span
           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${status === UserStatus.APPROVED
-              ? 'bg-green-100 text-green-800'
-              : status === UserStatus.PENDING
-                ? 'bg-yellow-100 text-yellow-800'
-                : 'bg-red-100 text-red-800'
+            ? 'bg-green-100 text-green-800'
+            : status === UserStatus.PENDING
+              ? 'bg-yellow-100 text-yellow-800'
+              : 'bg-red-100 text-red-800'
             }`}
         >
           {status}
@@ -126,7 +138,10 @@ export default function AdminCustomersPage() {
             <DropdownMenuItem onClick={() => handleSuspend(record._id as string)}>
               Suspend
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleDelete(record._id as string)} className="text-red-600">
+            <DropdownMenuItem onClick={() => handleDeactivate(record._id as string)}>
+              Deactivate
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setDeleteCustomer(record._id as string)} className="text-red-600">
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -136,25 +151,45 @@ export default function AdminCustomersPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
-        <p className="text-muted-foreground">View and manage registered customers.</p>
-      </div>
+    <>
+      <Dialog open={deleteCustomer !== null} onOpenChange={(open) => !open && setDeleteCustomer(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Customer</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to permanently delete this customer? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteCustomer(null)} disabled={isDeletingUser}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={() => handleDelete(deleteCustomer ?? "")} loading={isDeletingUser}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
+          <p className="text-muted-foreground">View and manage registered customers.</p>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Customer List</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table
-            columns={columns}
-            dataSource={customers || []}
-            loading={isLoading}
-            emptyText="No customers found."
-          />
-        </CardContent>
-      </Card>
-    </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Customer List</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table
+              columns={columns}
+              dataSource={customers || []}
+              loading={isLoading}
+              emptyText="No customers found."
+            />
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }

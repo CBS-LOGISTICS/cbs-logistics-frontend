@@ -17,7 +17,8 @@ export type SignInFormData = z.infer<typeof signInSchema>;
 // Customer Registration Schema
 export const customerRegistrationSchema = z.object({
   title: z.string().min(1, 'Title is required'),
-  fullName: z.string().min(1, 'Full name is required'),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
   dateOfBirth: z.string().min(1, 'Date of birth is required'),
   phone: z.string().min(1, 'Phone number is required'),
   email: z.string().email('Please enter a valid email address'),

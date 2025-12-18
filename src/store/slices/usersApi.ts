@@ -49,7 +49,8 @@ export interface RequiredDocuments {
 
 export interface RegisterCustomerRequest {
   title: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   dateOfBirth: string;
   phone: string;
   email: string;
