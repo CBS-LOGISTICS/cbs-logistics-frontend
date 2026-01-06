@@ -38,7 +38,7 @@ export default function Home() {
 
   const IconComponent = showPassword ? EyeOff : Eye;
 
-  console.log(isLoading, "IS LOADING");
+  // console.log(isLoading, "IS LOADING");
 
   const onboardingSections = [
     {
@@ -94,7 +94,7 @@ export default function Home() {
       toast.success('Login successful!');
     }).catch((err) => {
       console.error("Login failed:", err);
-      toast.error(err?.data?.error || 'Login failed. Please check your credentials.');
+      toast.error(err?.error || 'Login failed. Please check your credentials.');
     });
   };
 
@@ -201,6 +201,7 @@ export default function Home() {
                 </div>
                 <button
                   type="button"
+                  onClick={() => router.push('/forgotpassword')}
                   className="text-sm text-[#F63915] hover:text-[#d42e0f] font-semibold transition-colors"
                 >
                   Forgot password?

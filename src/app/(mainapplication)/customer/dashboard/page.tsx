@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Wallet, Package, Clock, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowRight, Clock, Package, Wallet } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface Property {
   _id: string;
@@ -83,14 +83,18 @@ export default function CustomerDashboard() {
           <p className="text-muted-foreground">Manage your properties and wallet.</p>
         </div>
         <div className="flex items-center gap-4">
-          <Button variant="outline">
-            <Clock className="mr-2 h-4 w-4" />
-            Transaction History
-          </Button>
-          <Button>
-            <Wallet className="mr-2 h-4 w-4" />
-            Top Up Wallet
-          </Button>
+          <a href="/customer/history">
+            <Button variant="outline">
+              <Clock className="mr-2 h-4 w-4" />
+              Transaction History
+            </Button>
+          </a>
+          <a href="/customer/wallet">
+            <Button>
+              <Wallet className="mr-2 h-4 w-4" />
+              Top Up Wallet
+            </Button>
+          </a>
         </div>
       </div>
 
@@ -102,7 +106,7 @@ export default function CustomerDashboard() {
             <Wallet className="h-4 w-4 opacity-90" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">${balance.toLocaleString()}</div>
+            <div className="text-3xl font-bold">₦{balance.toLocaleString()}</div>
             <p className="text-xs opacity-75 mt-1">Available for new purchases</p>
           </CardContent>
         </Card>
@@ -122,7 +126,7 @@ export default function CustomerDashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$600,000</div>
+            <div className="text-2xl font-bold">N600,000</div>
             <p className="text-xs text-muted-foreground">Lifetime investment</p>
           </CardContent>
         </Card>
@@ -132,9 +136,11 @@ export default function CustomerDashboard() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Recent Properties</CardTitle>
-          <Button variant="ghost" size="sm" className="text-sm">
-            View All <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+          <a href="/customer/history">
+            <Button variant="ghost" size="sm" className="text-sm">
+              View All <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </a>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
@@ -161,12 +167,12 @@ export default function CustomerDashboard() {
                   <tr key={property._id} className="border-t hover:bg-muted/50 transition-colors">
                     <td className="p-4 font-medium">{property.title}</td>
                     <td className="p-4 text-muted-foreground">{property.location}</td>
-                    <td className="p-4">${property.price.toLocaleString()}</td>
+                    <td className="p-4">₦{property.price.toLocaleString()}</td>
                     <td className="p-4">
                       <Badge variant={
-                        property.status === 'completed' ? 'default' : 
-                        property.status === 'processing' ? 'secondary' : 
-                        'outline'
+                        property.status === 'completed' ? 'default' :
+                          property.status === 'processing' ? 'secondary' :
+                            'outline'
                       }>
                         {property.status}
                       </Badge>
@@ -181,38 +187,38 @@ export default function CustomerDashboard() {
           </div>
         </CardContent>
       </Card>
-      
+
       {/* Recent Transactions */}
       <Card>
         <CardHeader>
           <CardTitle>Recent Transactions</CardTitle>
         </CardHeader>
         <CardContent>
-           <div className="space-y-4">
-             {loading ? (
-               <div className="text-center py-4">Loading...</div>
-             ) : transactions.map((tx) => (
-               <div key={tx._id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                 <div className="flex items-center gap-4">
-                   <div className={`p-2 rounded-full ${tx.type === 'deposit' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                     {tx.type === 'deposit' ? <ArrowRight className="h-4 w-4 rotate-45" /> : <ArrowRight className="h-4 w-4 -rotate-45" />}
-                   </div>
-                   <div>
-                     <p className="font-medium">{tx.description}</p>
-                     <p className="text-xs text-muted-foreground">{new Date(tx.date).toLocaleDateString()}</p>
-                   </div>
-                 </div>
-                 <div className="text-right">
-                   <p className={`font-medium ${tx.type === 'deposit' ? 'text-green-600' : 'text-red-600'}`}>
-                     {tx.type === 'deposit' ? '+' : '-'}${tx.amount.toLocaleString()}
-                   </p>
-                   <Badge variant="outline" className="text-xs scale-90 origin-right">
-                     {tx.status}
-                   </Badge>
-                 </div>
-               </div>
-             ))}
-           </div>
+          <div className="space-y-4">
+            {loading ? (
+              <div className="text-center py-4">Loading...</div>
+            ) : transactions.map((tx) => (
+              <div key={tx._id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                <div className="flex items-center gap-4">
+                  <div className={`p-2 rounded-full ${tx.type === 'deposit' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                    {tx.type === 'deposit' ? <ArrowRight className="h-4 w-4 rotate-45" /> : <ArrowRight className="h-4 w-4 -rotate-45" />}
+                  </div>
+                  <div>
+                    <p className="font-medium">{tx.description}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(tx.date).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className={`font-medium ${tx.type === 'deposit' ? 'text-green-600' : 'text-red-600'}`}>
+                    {tx.type === 'deposit' ? '+' : '-'}₦{tx.amount.toLocaleString()}
+                  </p>
+                  <Badge variant="outline" className="text-xs scale-90 origin-right">
+                    {tx.status}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

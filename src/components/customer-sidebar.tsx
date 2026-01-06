@@ -1,31 +1,53 @@
 "use client"
 
 import {
-    Building2,
-    History,
-    Home,
-    LogOut,
-    Wallet,
+  Building2,
+  History,
+  Home,
+  LogOut,
+  Settings,
+  Wallet,
 } from "lucide-react"
 import * as React from "react"
 
 import { Button } from "@/components/ui/button"
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarGroup,
-    SidebarGroupContent,
-    SidebarGroupLabel,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    SidebarRail,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
 } from "@/components/ui/sidebar"
 
+
+import { LogoutModal } from '@/components/logout-modal'
+import { useLogoutUserMutation } from '@/store/slices/usersApi'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+
 export function CustomerSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  
+  const router = useRouter();
+    const [logoutUser, { isLoading }] = useLogoutUserMutation();
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  
+    const handleLogout = async () => {
+      try {
+        await logoutUser().unwrap();
+        router.push('/');
+      } catch (error) {
+        console.error('Logout failed', error);
+      }
+    };
+
   return (
+    <>
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
@@ -59,9 +81,9 @@ export function CustomerSidebar({ ...props }: React.ComponentProps<typeof Sideba
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <a href="/customer/properties">
+                  <a href="/customer/services">
                     <Building2 />
-                    <span>My Properties</span>
+                    <span>Services</span>
                   </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -81,6 +103,14 @@ export function CustomerSidebar({ ...props }: React.ComponentProps<typeof Sideba
                   </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/customer/settings">
+                    <Settings />
+                    <span>Settings</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -89,7 +119,7 @@ export function CustomerSidebar({ ...props }: React.ComponentProps<typeof Sideba
         <SidebarMenu>
           <SidebarMenuItem>
              <SidebarMenuButton asChild>
-                <Button variant="ghost" className="w-full justify-start">
+                <Button variant="ghost" className="w-full justify-start" onClick={() => setIsLogoutModalOpen(true)}>
                   <LogOut />
                   <span>Logout</span>
                 </Button>
@@ -99,5 +129,12 @@ export function CustomerSidebar({ ...props }: React.ComponentProps<typeof Sideba
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
+     <LogoutModal
+            open={isLogoutModalOpen}
+            onOpenChange={setIsLogoutModalOpen}
+            onConfirm={handleLogout}
+            isLoading={isLoading}
+          />
+        </>
   )
 }

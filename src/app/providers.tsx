@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import { Provider } from 'react-redux';
+import { Toaster } from 'sonner';
 import { AppStore, store } from '../store';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -10,5 +11,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     // Create the store instance the first time this renders
     storeRef.current = store()
   }
-  return <Provider store={storeRef.current}>{children}</Provider>;
+  return (
+    <Provider store={storeRef.current}>
+      {children}
+      <Toaster />
+    </Provider>
+  );
 } 
