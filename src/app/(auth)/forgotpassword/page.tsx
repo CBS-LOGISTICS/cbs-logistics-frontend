@@ -5,14 +5,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Mail, Package } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 
-
 const ForgotPassword = () => {
-  // const router = useRouter();
-  const handleSubmit = () => {
-    toast.success('Password reset instructions have been sent.');
+  const router = useRouter();
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast.success('Password reset instructions have been sent.', {
+      duration: 5000, 
+    });
+    router.push('/resetpassword');
   }
 
 
