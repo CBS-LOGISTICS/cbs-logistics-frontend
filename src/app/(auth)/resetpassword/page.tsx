@@ -6,30 +6,21 @@ import { useFormik } from "formik";
 import { Package } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from "next/navigation";
-
+import { toast } from 'sonner';
 
 export default function ResetPassword() {
   const router = useRouter();
-  const handlePinChange = (value: string) => {
-    //TODO: Handle pin change
-  };
-
   const formik = useFormik({
     initialValues: {
       code: "",
     },
     onSubmit: (values: { code: any }) => {
-      console.log("Form submitted with code:", values.code);
+      toast.success("Password changed successfully");
+      console.log('code:', values.code)
+      router.push('/setnewpassword');
     },
   });
 
-  const handleResetPassword = () => {
-    console.log("Reset Password Clicked");
-  };
-
-  const handleResendVerifyEmail = () => {
-    console.log("Resend Verify Email Clicked");
-  };
 
   return (
 
@@ -65,24 +56,23 @@ export default function ResetPassword() {
           </p>
         </div>
 
+        <form onSubmit={formik.handleSubmit}>
+          <div className="py-6">
+           
+            <CustomInputPin className="flex items-center justify-center" value={formik.values.code} valueLength={4} onChange={(digit) => formik.setFieldValue("code", digit)} />
+            {formik.touched.code && formik.errors.code ? <div className=" ">{formik.errors.code as any}</div> : null}
+          </div>
 
-        <div className="space-y-2">
-          {/* OTP Input */}
-          <CustomInputPin  style = "flex-row justify-center" value={formik.values.code} valueLength={4} onChange={(digit) => formik.setFieldValue("code", digit)} />
-       {formik.touched.code && formik.errors.code ? <div className= " ">{formik.errors.code as any}</div> : null}
-        </div>
-
-        {/*Reset Button */}
-        <Button
-          type="submit"
-          onSubmit={handleResetPassword}
-          className="w-full h-12 bg-gradient-to-r from-[#F63915] to-[#d42e0f] hover:from-[#d42e0f] hover:to-[#F63915] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-base"
-        // disabled={isLoading}
-        // loading={isLoading}
-        >
-          Reset
-        </Button>
-
+         
+          <Button
+            type="submit"
+            className="w-full h-12 bg-gradient-to-r from-[#F63915] to-[#d42e0f] hover:from-[#d42e0f] hover:to-[#F63915] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-base"
+          // disabled={isLoading}
+          // loading={isLoading}
+          >
+            Reset
+          </Button>
+        </form>
       </div>
     </div>
   );

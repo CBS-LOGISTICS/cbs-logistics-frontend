@@ -13,9 +13,7 @@ const ForgotPassword = () => {
   const router = useRouter();
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success('Password reset instructions have been sent.', {
-      duration: 5000, 
-    });
+    toast.success('Password reset instructions have been sent.');
     router.push('/resetpassword');
   }
 

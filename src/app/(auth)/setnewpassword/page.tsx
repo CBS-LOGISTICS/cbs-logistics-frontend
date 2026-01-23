@@ -1,20 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Eye, Package } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Controller, useForm } from "react-hook-form";
-import Image from "next/image";
-import { Button } from "react-bootstrap";
-import { CustomInput } from "@/common/components/CustomInput";
-import { FaEyeSlash, FaEye } from "react-icons/fa";
-import { AiOutlineArrowLeft } from "react-icons/ai";
-import { useResetPasswordMutation } from "@/redux/services/auth/authApi";
-import { getCookieFromStorage } from "@/util/cookies";
-import { showErrorToast, showSuccessToast } from "@/util/toast";
-import ButtonLoader from "@/common/components/ButtonLoader";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
-import styles from "./setnewpassword.module.scss";
-import { Constants, handleError } from "@/util/helper";
+
 
 export default function SetNewPassword() {
   const [isShowPassword, setIsShowPassword] = useState(false);
@@ -22,14 +18,18 @@ export default function SetNewPassword() {
 
   const router = useRouter();
 
-  const { handleSubmit, control, watch } = useForm({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+  } = useForm({
     defaultValues: {
       password: "",
-      confirmpassword: "",
+      confirmPassword: "",
     },
   });
-
-  const [resetPassword, { isLoading }] = useResetPasswordMutation();
 
   const handleTogglePasswordVisibility = (
     value: "password" | "confirmPassword"
@@ -41,171 +41,87 @@ export default function SetNewPassword() {
     return setIsShowConfirmPassword((prev) => !prev);
   };
 
-  const onHandleSubmit = (value: {
+  const onSubmit = (value: {
     password: string;
-    confirmpassword: string;
+    confirmPassword: string;
   }) => {
-    const payload = {
-      email: getCookieFromStorage(Constants.USER_EMAIL) as string,
-      password: value?.password,
-      tempToken: getCookieFromStorage(Constants.TEMP_TOKEN) as string,
-    };
-
-    resetPassword(payload)
-      .unwrap()
-      .then((result) => {
-        showSuccessToast(result?.message);
-        setTimeout(() => {
-          router.push("/");
-        }, 2000);
-      })
-      .catch((error) => {
-        const _result = handleError(error);
-        showErrorToast(_result);
-      });
+   toast.success('Password resetted successfully.');
+    router.push('/');
   };
   return (
-    <React.Fragment>
-      <div className={styles.HeaderContainer}>
-        <Image
-          src="https://res.cloudinary.com/dbg2z1svm/image/upload/v1691418208/ibx-website-v2/logo_cz22mb.svg"
-          width={57}
-          height={38}
-          alt=""
-          className={styles.Logo}
-          onClick={() => router.push("/")}
-        />
-        <h2>Set New Password</h2>
-        <p className={styles.Text}>Must be at least 8 characters.</p>
-      </div>
 
-      <form className={styles.Form} onSubmit={handleSubmit(onHandleSubmit)}>
-        <div className="mb-4">
-          <div className={styles.InputContainer}>
-            {" "}
-            <Controller
-              name="password"
-              control={control}
-              rules={{ required: "*password is required", min: "8" }}
-              render={({
-                field: { onChange, value },
-                formState: { errors },
-              }) => {
-                const errorMessage = errors.password?.message;
-                return (
-                  <CustomInput
-                    isShowLabel
-                    labelText="Password"
-                    type={isShowPassword ? "text" : "password"}
-                    placeholder="Password"
-                    isShowIcon
-                    ImageIcon={
-                      isShowPassword ? (
-                        <div className={styles.passwordIconStyle}>
-                          <FaEyeSlash
-                            onClick={() =>
-                              handleTogglePasswordVisibility("password")
-                            }
-                          />
-                        </div>
-                      ) : (
-                        <div className={styles.backIconStyle}>
-                          <FaEye
-                            onClick={() =>
-                              handleTogglePasswordVisibility("password")
-                            }
-                          />
-                        </div>
-                      )
-                    }
-                    {...{ value, onChange, errors: [errorMessage] }}
-                  />
-                );
-              }}
-            />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 p-4 py-8">
+      <div className="mx-auto max-w-4xl space-y-6">
+        {/* Logo Navigation */}
+        <Link href="/" className="group">
+          <div className="flex items-center gap-3 w-fit mx-auto mb-4 px-6 py-3 bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#F63915]/30">
+            <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-[#F63915] to-[#d42e0f] rounded-xl shadow-md group-hover:scale-110 transition-transform duration-300">
+              <Package className="w-5 h-5 text-white" />
+            </div>
+            <div className="text-left">
+              <h2 className="text-xl font-bold bg-gradient-to-r from-[#F63915] to-[#d42e0f] bg-clip-text text-transparent">
+                CBS Logistics
+              </h2>
+              <p className="text-xs text-gray-600 font-medium">Back to SignIn</p>
+            </div>
           </div>
+        </Link>
+
+        {/* Header */}
+        <div className="text-center bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#F63915] to-[#d42e0f] rounded-2xl mb-4 shadow-lg">
+            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[#F63915] to-[#d42e0f] bg-clip-text text-transparent mb-2">
+            Set New Password
+          </h1>
+          <p className="text-gray-600 text-lg"> Must be at least 8 characters.
+          </p>
         </div>
-        <div className="mb-4">
-          <div className={styles.InputContainer}>
-            {" "}
-            <Controller
-              name="confirmpassword"
-              control={control}
-              rules={{
-                required: "*password is required",
-                min: "8",
-                validate: (val: string) => {
-                  if (watch("password") != val) {
-                    return "passwords do not match";
+
+        <form onSubmit={handleSubmit(onSubmit)} >
+          <div className="gap-4 w-xl max-w-md mx-auto space-y-4">
+            <div className="py-4 space-y-2">
+              <Label htmlFor="password">New Password *</Label>
+              <div className="flex items-center justify-between border border-gray-300 rounded-lg pr-2">
+                <Input id="password" className="border-0 mr-2"
+                  type={isShowPassword ? "text" : "password"}
+                  {...register('password')} />
+                {errors.password && <p className="text-sm text-red-600">{errors.password.message}</p>}
+                <Eye
+                  onClick={() =>
+                    handleTogglePasswordVisibility("password")
                   }
-                },
-              }}
-              render={({
-                field: { onChange, value },
-                formState: { errors },
-              }) => {
-                const errorMessage = errors.confirmpassword?.message;
-                return (
-                  <CustomInput
-                    isShowLabel
-                    labelText="Confirm Password"
-                    type={isShowConfirmPassword ? "text" : "password"}
-                    placeholder="Password"
-                    isShowIcon
-                    ImageIcon={
-                      isShowPassword ? (
-                        <div className={styles.passwordIconStyle}>
-                          <FaEyeSlash
-                            onClick={() =>
-                              handleTogglePasswordVisibility("password")
-                            }
-                          />
-                        </div>
-                      ) : (
-                        <div className={styles.backIconStyle}>
-                          <FaEye
-                            onClick={() =>
-                              handleTogglePasswordVisibility("password")
-                            }
-                          />
-                        </div>
-                      )
-                    }
-                    {...{ value, onChange, errors: [errorMessage] }}
-                  />
-                );
-              }}
-            />
+                />
+              </div>
+
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm New Password *</Label>
+              <div className="flex items-center justify-between border border-gray-300 rounded-lg pr-2">
+                <Input id="confirmPassword" className="border-0 mr-2" type={isShowPassword ? "text" : "password"} {...register('confirmPassword')} />
+                <Eye onClick={() => handleTogglePasswordVisibility("confirmPassword")} />
+              </div>
+              {errors.confirmPassword && <p className="text-sm text-red-600">{errors.confirmPassword.message}</p>}
+            </div>
+
+
+
+            <Button
+              type="submit"
+              className="w-full mt-4 h-12 bg-gradient-to-r from-[#F63915] to-[#d42e0f] hover:from-[#d42e0f] hover:to-[#F63915] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-base"
+            // disabled={isLoading}
+            // loading={isLoading}
+            >
+              Reset
+            </Button>
           </div>
-        </div>
-
-        <div className="mt-3">
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className={styles.ActionButton}>
-            {isLoading ? <ButtonLoader /> : "Reset Password"}
-          </Button>
-        </div>
-      </form>
-
-      <span onClick={() => router.push("/signup")} className={styles.BackButon}>
-        <AiOutlineArrowLeft style={backIconStyle} />
-        <p>Back to Sign In</p>
-      </span>
-    </React.Fragment>
+        </form>
+      </div>
+    </div>
   );
 }
 
-const passwordIconStyle = {
-  position: "absolute",
-  right: "1rem",
-  bottom: "1rem",
-  color: "#7E87A1",
-  cursor: "pointer",
-};
-const backIconStyle = {
-  width: "14x",
-  height: "17px",
-  fill: "var(--gray-700)",
-};

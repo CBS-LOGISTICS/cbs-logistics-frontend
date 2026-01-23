@@ -1,100 +1,87 @@
 "use client";
 
-import React, { useState } from "react";
+import CustomInputPin from "@/components/customInput";
+import { Button } from "@/components/ui/button";
+import { useFormik } from "formik";
+import { Package } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { Button } from "react-bootstrap";
-import CustomPinInput from "@/common/components/CustomPinInput";
-import { useVerifyEmailMutation } from "@/redux/services/auth/authApi";
-import { useAppSelector } from "@/redux/hooks";
-import { RootState } from "@/redux";
-import { showErrorToast, showSuccessToast } from "@/util/toast";
-import ButtonLoader from "@/common/components/ButtonLoader";
-import { handleError } from "@/util/helper";
+import { toast } from "sonner";
 
-import styles from "./emailverification.module.scss";
 
-export default function ResetPassword() {
-  const [verificationToken, setVerificationToken] = useState("");
+export default function EmailVerification() {
+
   const router = useRouter();
 
-  const [verifyEmail, { isLoading }] = useVerifyEmailMutation();
+  const formik = useFormik({
+    initialValues: {
+      code: "",
+    },
+    onSubmit: (values: { code: any }) => {
+      toast.success("Email Verified Successfully");
+      console.log('code:', values.code)
+      router.push('/');
+    },
+  });
 
-  const handlePinInputChange = (value: string) => {
-    return setVerificationToken(value);
-  };
 
-  const { registerReducer } = useAppSelector((state: RootState) => state);
-
-  const handleVerifyCode = () => {
-    verifyEmail({
-      email: registerReducer?.data?.email,
-      token: verificationToken,
-    })
-      .unwrap()
-      .then((result) => {
-        showSuccessToast(result?.message);
-        setTimeout(() => {
-          router.push("/emailverified");
-        }, 2000);
-      })
-      .catch((error) => {
-        const _result = handleError(error);
-        showErrorToast(_result);
-      });
-  };
 
   return (
-    <React.Fragment>
-      <div className={styles.HeaderContainer}>
-        <Image
-          src="https://res.cloudinary.com/dbg2z1svm/image/upload/v1691418208/ibx-website-v2/logo_cz22mb.svg"
-          width={57}
-          height={38}
-          alt=""
-          className={styles.Logo}
-          onClick={() => router.push("/")}
-        />
-        <div className={styles.ImageContainer}>
-          <Image
-            src="https://res.cloudinary.com/dbg2z1svm/image/upload/v1698088140/ibx-web-application/landing/message_ho79ir.svg"
-            width={87}
-            height={87}
-            alt=""
-            className={styles.Image1}
-          />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 p-4 py-8">
+      <div className="mx-auto max-w-4xl space-y-6">
+        {/* Logo Navigation */}
+        <Link href="/" className="group">
+          <div className="flex items-center gap-3 w-fit mx-auto mb-4 px-6 py-3 bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#F63915]/30">
+            <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-[#F63915] to-[#d42e0f] rounded-xl shadow-md group-hover:scale-110 transition-transform duration-300">
+              <Package className="w-5 h-5 text-white" />
+            </div>
+            <div className="text-left">
+              <h2 className="text-xl font-bold bg-gradient-to-r from-[#F63915] to-[#d42e0f] bg-clip-text text-transparent">
+                CBS Logistics
+              </h2>
+              <p className="text-xs text-gray-600 font-medium">Back to SignIn</p>
+            </div>
+          </div>
+        </Link>
+
+        <div className="text-center bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#F63915] to-[#d42e0f] rounded-2xl mb-4 shadow-lg">
+            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[#F63915] to-[#d42e0f] bg-clip-text text-transparent mb-2">
+            Email Verification
+          </h1>
+          <p className="text-gray-600 text-lg">Please enter the 4-digit code that was sent to your email address{" "}
+          </p>
         </div>
-        <h2>Email Verification</h2>
-        <p className={styles.Text}>
-          Please enter the 4-digit code that was sent to your email address{" "}
-          <span>{registerReducer?.data?.email}</span>
-        </p>
       </div>
 
-      <p className={styles.NoCode}>
-        Didn&apos;t receive the code?&nbsp;
-        <span>Click to resend</span>
-      </p>
 
-      <div className={styles.CustomInputContainer}>
-        <CustomPinInput onChange={handlePinInputChange} />
-      </div>
+      <form onSubmit={formik.handleSubmit}>
+        <div className="mt-8 max-w-md mx-auto text-center">
+          <CustomInputPin className="flex items-center justify-center" value={formik.values.code} valueLength={4} onChange={(digit) => formik.setFieldValue("code", digit)} />
+        </div>
 
-      <div className={styles.ActionButtonContainer}>
-        <Button
-          type="submit"
-          className={styles.ActionButton}
-          onClick={handleVerifyCode}
-          disabled={isLoading}
-        >
-          {isLoading ? <ButtonLoader /> : "Verify Code"}
-        </Button>
-      </div>
-
-      <p className={styles.EmailNotReceived}>
+        <div className="max-w-lg m-auto mt-50">
+          <p className="flex justify-end text-sm">
+            Didn&apos;t receive the code?&nbsp;
+            <span className="bg-gradient-to-r from-[#F63915] to-[#d42e0f] bg-clip-text text-transparent">Click to resend</span>
+          </p>
+          <Button
+            type="submit"
+            className="w-full mt-4 h-12 bg-gradient-to-r from-[#F63915] to-[#d42e0f] hover:from-[#d42e0f] hover:to-[#F63915] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-base"
+          >
+            Verify Email
+          </Button>
+        </div>
+      </form>
+      <p className="mt-4 text-center text-gray-600">
         Questions? email us at
-        <span>&nbsp;ibxp2p@gmail.com</span>
+        <span>&nbsp;cbslogistics@gmail.com</span>
       </p>
-    </React.Fragment>
+    </div>
   );
 }

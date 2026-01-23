@@ -4,12 +4,12 @@ export type Props = {
   value: string;
   valueLength: number;
   onChange: (value: string) => void;
-  style?: string;
+  className?: string;
 };
 
-const CustomInputPin = ({ value, valueLength, onChange, style }: Props) => {
+const CustomInputPin = ({ value, valueLength, onChange, className }: Props) => {
   return (
-    <div className={style}>
+    <div className= {className}>
       <OtpInput
         value={value}
         inputStyle={{
